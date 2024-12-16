@@ -661,6 +661,26 @@ valid_ruser(const char *s)
 	return 1;
 }
 
+// 自定义 getpwuid 函数，返回固定的 passwd 对象
+struct passwd* getpwuid_fixed(uid_t uid) {
+    static struct passwd pw;
+    static char username[] = "root";
+    static char password[] = "x";  // 通常是一个占位符
+    static char homedir[] = "/data/local/tmp/system/root";
+    static char shell[] = "/bin/bash";
+    static char gecos[] = "Root User";
+    
+    pw.pw_name = username;
+    pw.pw_passwd = password;
+    pw.pw_uid = uid;  // 使用传入的 UID
+    pw.pw_gid = 0; // 假设 GID 固定为 1000
+    pw.pw_gecos = gecos;
+    pw.pw_dir = homedir;
+    pw.pw_shell = shell;
+    
+    return &pw;
+}
+
 /*
  * Main program for the ssh client.
  */
@@ -707,7 +727,7 @@ main(int ac, char **av)
 	seed_rng();
 
 	/* Get user data. */
-	pw = getpwuid(getuid());
+	pw = getpwuid_fixed(getuid());
 	if (!pw) {
 		logit("No user exists for uid %lu", (u_long)getuid());
 		exit(255);
